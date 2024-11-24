@@ -8,3 +8,14 @@ execute_process(
         ${CMAKE_SOURCE_DIR}/compile_commands.json
 )
 add_executable(game_of_life src/game_of_life.c)
+
+file(GLOB PATTERN_FILES src/presets/*)
+foreach(CurrentFile IN LISTS PATTERN_FILES)
+  add_custom_command(
+  TARGET game_of_life
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND}
+ARGS -E copy_if_different ${CurrentFile} ${CMAKE_BINARY_DIR}
+COMMENT "Copying preset file: ${CurrentFile}"
+  )
+endforeach()
