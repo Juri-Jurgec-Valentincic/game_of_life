@@ -14,10 +14,9 @@ struct winsize window_size;
 #define ROWS window_size.ws_row
 typedef unsigned short us;
 
-// █
-unsigned char alive_char = 'X';
+char alive[] = "\u2588";
 
-char field_val(us row, us col) { return field[row * col + col]; }
+char field_val(us row, us col) { return field[row * COLS + col]; }
 
 char new_state(us row, us col) {
   char sum = 0;
@@ -61,7 +60,7 @@ void update() {
   char buf1[COLS], buf2[COLS], *use = buf1;
   for (us row = 0; row < ROWS; row++) {
     for (us col = 0; col < COLS; col++) {
-      use[row] = new_state(row, col);
+      use[col] = new_state(row, col);
     }
     if (row == 0)
       use = buf2;
@@ -81,10 +80,10 @@ void update() {
 
 void draw() {
   system("clear");
-  for (us c = 0; c < COLS; c++) {
-    for (us r = 0; r < ROWS; r++) {
+  for (us r = 0; r < ROWS; r++) {
+    for (us c = 0; c < COLS; c++) {
       if (field_val(r, c))
-        putchar(alive_char);
+        fputs(alive, stdout);
       else
         putchar(' ');
     }
