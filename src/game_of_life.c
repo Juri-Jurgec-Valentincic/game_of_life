@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -14,13 +15,13 @@ struct winsize window_size;
 typedef unsigned short us;
 
 // █
-unsigned char alive_char = 219;
+unsigned char alive_char = 'X';
 
 char field_val(us row, us col) { return field[row * col + col]; }
 
 char new_state(us row, us col) {
   char sum = 0;
-  bool is_top, is_bottom, is_left, is_right;
+  bool is_top = false, is_bottom = false, is_left = false, is_right = false;
   if (row == 0)
     is_top = true;
   else if (row == ROWS - 1)
@@ -28,7 +29,7 @@ char new_state(us row, us col) {
   if (col == 0)
     is_left = true;
   else if (col == COLS - 1)
-    is_right = false;
+    is_right = true;
 
   if (!is_top) {
     if (!is_left)
@@ -80,10 +81,12 @@ void update() {
 
 void draw() {
   system("clear");
-  for (us c; c < COLS; c++) {
-    for (us r; r < ROWS; r++) {
+  for (us c = 0; c < COLS; c++) {
+    for (us r = 0; r < ROWS; r++) {
       if (field_val(r, c))
         putchar(alive_char);
+      else
+        putchar(' ');
     }
     putchar('\n');
   }
@@ -93,7 +96,8 @@ void draw() {
 void readfile(char *file_name) {
   FILE *file = fopen(file_name, "r");
   if (!file) {
-    fprintf(stderr, "ERROR could not open file: %s", file_name);
+    fprintf(stderr, "ERROR opening file \"%s\": %s\n", file_name,
+            strerror(errno));
     exit(EXIT_FAILURE);
   }
   char c = fgetc(file);
@@ -108,20 +112,26 @@ void readfile(char *file_name) {
       field[i] = 1;
       break;
     case '\n':
-      until_eol = COLS - (ROWS * COLS % (i + 1));
-      memset(field + i, 0, until_eol);
+      until_eol = COLS - (i + 1) % COLS;
+      i += until_eol;
       break;
     }
     i++;
+    c = fgetc(file);
   }
-  memset(field + i, 0, ROWS * COLS - i);
   fclose(file);
 }
 
 int main(int argc, char *argv[]) {
+  if (argc == 1 || argc == 2 && !strcmp(argv[1], "-h") ||
+      argc == 2 && !strcmp(argv[1], "--help")) {
+    printf("Usage: %s initial_state_file\n", argv[0]);
+    return EXIT_FAILURE;
+  }
   ioctl(0, TIOCGWINSZ, &window_size);
   field = alloca(sizeof(bool) * COLS * ROWS);
   memset(field, 0, COLS * ROWS);
+  readfile(argv[1]);
   while (1) {
     draw();
     update();
