@@ -15,6 +15,8 @@ struct winsize window_size;
 typedef unsigned short us;
 
 char alive[] = "\u2588";
+// sleep time between frames in micro seconds
+#define SLEEP_TIME 250000
 
 char field_val(us row, us col) { return field[row * COLS + col]; }
 
@@ -89,7 +91,6 @@ void draw() {
     }
     putchar('\n');
   }
-  usleep(500000);
 }
 
 void readfile(char *file_name) {
@@ -134,6 +135,7 @@ int main(int argc, char *argv[]) {
   while (1) {
     draw();
     update();
+    usleep(SLEEP_TIME);
   }
   return EXIT_SUCCESS;
 }
