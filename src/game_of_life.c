@@ -141,6 +141,7 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
   get_clear();
+  // get terminal window size form kernel
   ioctl(0, TIOCGWINSZ, &window_size);
   field = alloca(sizeof(bool) * COLS * ROWS);
   memset(field, 0, COLS * ROWS);
