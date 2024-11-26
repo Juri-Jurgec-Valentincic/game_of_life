@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -7,12 +8,13 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+typedef unsigned short us;
 char *field;
 
 struct winsize window_size;
 #define COLS window_size.ws_col
 #define ROWS window_size.ws_row
-typedef unsigned short us;
+char *clear_str;
 
 char alive[] = "\u2588";
 // sleep time between frames in micro seconds
@@ -81,7 +83,7 @@ void update() {
 }
 
 void draw() {
-  system("clear");
+  fputs(clear_str, stdout);
   for (us r = 0; r < ROWS; r++) {
     for (us c = 0; c < COLS; c++) {
       if (field_val(r, c))
@@ -122,12 +124,23 @@ void readfile(char *file_name) {
   fclose(file);
 }
 
+void get_clear() {
+  FILE *fp = popen("clear", "r");
+  assert(fp);
+  char tmp[255];
+  fgets(tmp, sizeof(tmp), fp);
+  clear_str = malloc(strlen(tmp));
+  strcpy(clear_str, tmp);
+  pclose(fp);
+}
+
 int main(int argc, char *argv[]) {
   if (argc == 1 || argc == 2 && !strcmp(argv[1], "-h") ||
       argc == 2 && !strcmp(argv[1], "--help")) {
     printf("Usage: %s initial_state_file\n", argv[0]);
     return EXIT_FAILURE;
   }
+  get_clear();
   ioctl(0, TIOCGWINSZ, &window_size);
   field = alloca(sizeof(bool) * COLS * ROWS);
   memset(field, 0, COLS * ROWS);
@@ -137,5 +150,6 @@ int main(int argc, char *argv[]) {
     update();
     usleep(SLEEP_TIME);
   }
+  free(clear_str);
   return EXIT_SUCCESS;
 }
